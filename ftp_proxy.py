@@ -10,7 +10,7 @@ class ProxyException(Exception):
     """Proxy returned an error."""
 
 # Class that wraps a real socket and changes it to a HTTP tunnel whenever a connection is asked via the "connect" method
-class ProxySock :    
+class ftp_proxy :    
     #def __init__(self, socket, proxy_host, proxy_port) : 
     def __init__(self, socket, proxy_host, proxy_port) : 
         # First, use the socket, without any change
