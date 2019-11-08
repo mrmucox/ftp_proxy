@@ -2,6 +2,7 @@ import socket
 from ftplib import FTP
 import io
 import gzip
+import time
 
 socket.socket_formal = socket.socket
 
