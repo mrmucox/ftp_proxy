@@ -178,7 +178,7 @@ def setup_ftp_connection(FTP_HOST, FTP_USER = "Anonymous", FTP_PASS = "Anonymous
                 if debug:
                     print ""
             if debug:
-                print " Request failed, {0} tries left... ".format(retries - OtherError)
+                print " Request failed, {0} tries left... ".format(OtherErrorRetries - OtherError)
                 print e
             time.sleep(1)
     raise
