@@ -156,7 +156,7 @@ def setup_ftp_connection(FTP_HOST, FTP_USER = "Anonymous", FTP_PASS = "Anonymous
             return FTP(FTP_HOST, FTP_USER, FTP_PASS)
             if debug:
                 print "FTP Connection Established"
-        except ftp_proxy.ProxyException as e:
+        except ProxyException as e:
             ProxyException += 1
             if debug:
                 if ProxyException == 1:
@@ -180,7 +180,7 @@ def setup_ftp_connection(FTP_HOST, FTP_USER = "Anonymous", FTP_PASS = "Anonymous
                     print ""
             if debug:
                 print " Request failed, {0} tries left... ".format(OtherErrorRetries - OtherError)
-                print e
+                print sys.exc_info()[0]
             time.sleep(1)
     raise
 
