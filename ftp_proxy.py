@@ -3,6 +3,7 @@ from ftplib import FTP
 import io
 import gzip
 import time
+import sys
 
 socket.socket_formal = socket.socket
 
@@ -12,7 +13,7 @@ class ProxyException(Exception):
 # Class that wraps a real socket and changes it to a HTTP tunnel whenever a connection is asked via the "connect" method
 class ftp_proxy :    
     #def __init__(self, socket, proxy_host, proxy_port) : 
-    def __init__(self, socket, proxy_host, proxy_port) : 
+    def __init__(self, socket, proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS = "anonymous", debug = True, ProxyConnectionErrorRetries = 0, OtherErrorRetries = 20) : 
         # First, use the socket, without any change
         self.socket = socket
 
@@ -20,10 +21,75 @@ class ftp_proxy :
         self.proxy_host = proxy_host
         self.proxy_port = proxy_port
 
+        # FTP Host Parameters
+        self.FTP_HOST = FTP_HOST
+        self.FTP_USER = FTP_USER
+        self.FTP_PASS = FTP_PASS
+
+        # Options
+        self.debug = debug
+        self.ProxyConnectionErrorRetries = ProxyConnectionErrorRetries
+        self.OtherErrorRetries = OtherErrorRetries
+
         # Copy attributes
         self.family = socket.family
         self.type = socket.type
         self.proto = socket.proto
+
+        def socket_proxy(af, socktype, proto) :
+
+            # Create a socket, old school :
+            sock = socket.socket_formal(af, socktype, proto)
+
+            # Wrap it within a proxy socket
+            return ftp_proxy(sock, self.proxy_host, self.proxy_port) 
+
+        # Replace the "socket" method by our custom one
+        socket.socket = socket_proxy
+
+        passed = False
+        OtherError = 0
+        ProxyException = 0
+        #print (passed, OtherError, OtherErrorRetries, ProxyException, ProxyConnectionErrorRetries)
+        while (not passed and OtherError < self.OtherErrorRetries and (ProxyException < self.ProxyConnectionErrorRetries or self.ProxyConnectionErrorRetries == 0)):
+            try:
+                self.ftp = FTP(self.FTP_HOST, self.FTP_USER, self.FTP_PASS)
+                if debug:
+                    print "FTP Connection Established"
+                passed = True
+            except ProxyException as e:
+                ProxyException += 1
+                if debug:
+                    if ProxyException == 1:
+                        if self.ProxyConnectionErrorRetries == 0:
+                            print " Request failed, Proxy Error, will retry {0} times.".format(self.ProxyConnectionErrorRetries),
+                        else:
+                            print " Request failed, Proxy Error, will retry until proxy available.",
+                        sys.stdout.softspace=0
+                    else:
+                        print ".",
+                        sys.stdout.softspace=0
+                time.sleep(1)
+                passed = False
+            except Exception as e:
+                passed = False
+                lastException = str(e)[0:4000]
+                OtherError += 1
+                if(ProxyException > 0):
+                    ProxyException = 0
+                    if debug:
+                        print ""
+                if debug:
+                    print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                    print sys.exc_info()[0]
+                time.sleep(1)
+                passed = False
+        if not passed:
+            raise
+
+    def __getattr__(self, name):
+        '''Automatically wrap methods and attributes for socket object.'''
+        return getattr(self.socket, name)
 
     def connect(self, address) :
 
@@ -48,7 +114,7 @@ class ftp_proxy :
                 continue
             break
         if not self.socket :
-            raise socket.error, ms 
+            raise socket.error, msg
         
         # Ask him to create a tunnel connection to the target host/port
         self.socket.send(
@@ -65,131 +131,43 @@ class ftp_proxy :
         if parts[1] != "200" :
             raise ProxyException("Error response from Proxy server : %s" % resp)
 
-    # Wrap all methods of inner socket, without any change
-    def accept(self) :
-        return self.socket.accept()
-
-    def bind(self, *args) :
-        return self.socket.bind(*args)
-    
-    def close(self) :
-        return self.socket.close()
-    
-    def fileno(self) :
-        return self.socket.fileno()
-
-    
-    def getsockname(self) :
-        return self.socket.getsockname()
-    
-    def getsockopt(self, *args) :
-        return self.socket.getsockopt(*args)
-    
-    def listen(self, *args) :
-        return self.socket.listen(*args)
-    
-    def makefile(self, *args) :
-        return self.socket.makefile(*args)
-    
-    def recv(self, *args) :
-        return self.socket.recv(*args)
-    
-    def recvfrom(self, *args) :
-        return self.socket.recvfrom(*args)
-
-    def recvfrom_into(self, *args) :
-        return self.socket.recvfrom_into(*args)
-    
-    def recv_into(self, *args) :
-        return self.socket.recv_into(buffer, *args)
-    
-    def send(self, *args) :
-        return self.socket.send(*args)
-    
-    def sendall(self, *args) :
-        return self.socket.sendall(*args)
-    
-    def sendto(self, *args) :
-        return self.socket.sendto(*args)
-    
-    def setblocking(self, *args) :
-        return self.socket.setblocking(*args)
-    
-    def settimeout(self, *args) :
-        return self.socket.settimeout(*args)
-    
-    def gettimeout(self) :
-        return self.socket.gettimeout()
-    
-    def setsockopt(self, *args):
-        return self.socket.setsockopt(*args)
-    
-    def shutdown(self, *args):
-        return self.socket.shutdown(*args)
-
-    # Return the (host, port) of the actual target, not the proxy gateway
-    def getpeername(self) :
-        return (self.host, self.port)
-
-    # Install a proxy, by changing the method socket.socket()
-def setup_http_proxy(proxy_host, proxy_port) :
-
-    # New socket constructor that returns a ProxySock, wrapping a real socket
-    def socket_proxy(af, socktype, proto) :
-
-        # Create a socket, old school :
-        sock = socket.socket_formal(af, socktype, proto)
-
-        # Wrap it within a proxy socket
-        return ftp_proxy(sock, proxy_host, proxy_port) 
-
-    # Replace the "socket" method by our custom one
-    socket.socket = socket_proxy
-
-def setup_ftp_connection(FTP_HOST, FTP_USER = "Anonymous", FTP_PASS = "Anonymous", debug = True, ProxyConnectionErrorRetries = 0, OtherErrorRetries = 20):
-    passed = False
-    OtherError = 0
-    ProxyException = 0
-    #print (passed, OtherError, OtherErrorRetries, ProxyException, ProxyConnectionErrorRetries)
-    while (not passed and OtherError < OtherErrorRetries and (ProxyException < ProxyConnectionErrorRetries or ProxyConnectionErrorRetries == 0)):
-        try:
-            return FTP(FTP_HOST, FTP_USER, FTP_PASS)
-            if debug:
-                print "FTP Connection Established"
-        except ProxyException as e:
-            ProxyException += 1
-            if debug:
-                if ProxyException == 1:
-                    if ProxyConnectionErrorRetries == 0:
-                        print " Request failed, Proxy Error, will retry {0} times.".format(ProxyConnectionErrorRetries),
-                    else:
-                        print " Request failed, Proxy Error, will retry until proxy available.",
-                    sys.stdout.softspace=0
-                else:
-                    print ".",
-                    sys.stdout.softspace=0
-            time.sleep(1)
-            passed = False
-        except Exception as e:
-            passed = False
-            lastException = str(e)[0:4000]
-            OtherError += 1
-            if(ProxyException > 0):
-                ProxyException = 0
+    def get_gzip_file_from_ftp(self, FTP_FILE_PATH):
+        mem = io.BytesIO()
+        passed = False
+        OtherError = 0
+        ProxyException = 0
+        
+        while (not passed and OtherError < self.OtherErrorRetries and (ProxyException < self.ProxyConnectionErrorRetries or self.ProxyConnectionErrorRetries == 0)):
+            try:
+                self.retrbinary("RETR {0}".format(FTP_FILE_PATH), mem.write)
+                mem.seek(0)
+                gz = gzip.GzipFile(fileobj=mem, mode='rb')
+                return gz.read()
+            except ProxyException as e:
+                ProxyException += 1
                 if debug:
-                    print ""
-            if debug:
-                print " Request failed, {0} tries left... ".format(OtherErrorRetries - OtherError)
-                print sys.exc_info()[0]
-            time.sleep(1)
-    raise
-
-def get_gzip_file_from_ftp(FTP_CONNECTION, FTP_FILE_PATH):
-    mem = io.BytesIO()
-    passed = False
-    tries = 10
-    tried = 0
-    FTP_CONNECTION.retrbinary("RETR {0}".format(FTP_FILE_PATH), mem.write)
-    mem.seek(0)
-    gz = gzip.GzipFile(fileobj=mem, mode='rb')
-    return gz.read()
+                    if ProxyException == 1:
+                        if self.ProxyConnectionErrorRetries == 0:
+                            print " Request failed, Proxy Error, will retry {0} times.".format(self.ProxyConnectionErrorRetries),
+                        else:
+                            print " Request failed, Proxy Error, will retry until proxy available.",
+                        sys.stdout.softspace=0
+                    else:
+                        print ".",
+                        sys.stdout.softspace=0
+                time.sleep(1)
+                passed = False
+            except Exception as e:
+                passed = False
+                lastException = str(e)[0:4000]
+                OtherError += 1
+                if(ProxyException > 0):
+                    ProxyException = 0
+                    if debug:
+                        print ""
+                if debug:
+                    print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                    print sys.exc_info()[0]
+                time.sleep(1)
+                passed = False
+            raise
