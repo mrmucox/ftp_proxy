@@ -81,7 +81,7 @@ class ftp_connection:
         self.debug = debug
         self.ProxyConnectionErrorRetries = ProxyConnectionErrorRetries
         self.OtherErrorRetries = OtherErrorRetries
-
+        
     def get_gz_file(self, FTP_FILE_PATH):
         mem = io.BytesIO()
         passed = False
@@ -98,7 +98,7 @@ class ftp_connection:
                 ProxyExceptions += 1
                 if self.debug:
                     if ProxyExceptions == 1:
-                        if self.ProxyConnectionErrorRetries == 0:
+                        if self.ProxyConnectionErrorRetries != 0:
                             print " Request failed, Proxy Error, will retry {0} times.".format(self.ProxyConnectionErrorRetries),
                         else:
                             print " Request failed, Proxy Error, will retry until proxy available.",
@@ -121,7 +121,7 @@ class ftp_connection:
                     print sys.exc_info()[0]
                 time.sleep(1)
                 passed = False
-            raise
+        raise
 
     def get_txt_file(self, FTP_FILE_PATH):
         mem = StringIO.StringIO()
@@ -138,7 +138,7 @@ class ftp_connection:
                 ProxyExceptions += 1
                 if self.debug:
                     if ProxyExceptions == 1:
-                        if self.ProxyConnectionErrorRetries == 0:
+                        if self.ProxyConnectionErrorRetries != 0:
                             print " Request failed, Proxy Error, will retry {0} times.".format(self.ProxyConnectionErrorRetries),
                         else:
                             print " Request failed, Proxy Error, will retry until proxy available.",
@@ -161,7 +161,7 @@ class ftp_connection:
                     print sys.exc_info()[0]
                 time.sleep(1)
                 passed = False
-            raise
+        raise
 
 def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS = "anonymous", debug = True, ProxyConnectionErrorRetries = 1, OtherErrorRetries = 1) : 
     
