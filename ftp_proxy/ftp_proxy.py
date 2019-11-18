@@ -208,3 +208,4 @@ def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS
                 print sys.exc_info()[0]
             time.sleep(1)
             passed = False
+        raise
