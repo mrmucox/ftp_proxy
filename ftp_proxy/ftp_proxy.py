@@ -195,6 +195,11 @@ def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS
                     sys.stdout.softspace=0
             time.sleep(1)
             passed = False
+        except EOFError as e:
+            passed = False
+            print " Connection failed, will retry until connected... ".format(OtherErrorRetries - OtherError)
+            time.sleep(1)
+            passed = False
         except Exception as e:
             passed = False
             lastException = str(e)[0:4000]
