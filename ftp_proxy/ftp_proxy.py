@@ -176,6 +176,7 @@ def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS
 
     passed = False
     OtherError = 0
+    ConnectError = 0
     ProxyException = 0
     #print (passed, OtherError, OtherErrorRetries, ProxyException, ProxyConnectionErrorRetries)
     while (not passed and OtherError < OtherErrorRetries and (ProxyException < ProxyConnectionErrorRetries or ProxyConnectionErrorRetries == 0)):
@@ -196,8 +197,14 @@ def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS
             time.sleep(1)
             passed = False
         except EOFError as e:
-            passed = False
-            print " Connection failed, will retry until connected... ".format(OtherErrorRetries - OtherError)
+            ConnectError += 1
+            if debug:
+                if ConnectError == 1:
+                    print " Connection failed, will retry until connected... ",
+                    sys.stdout.softspace=0
+                else:
+                    print ".",
+                    sys.stdout.softspace=0
             time.sleep(1)
             passed = False
         except Exception as e:
