@@ -120,7 +120,7 @@ class ftp_connection:
                         if self.debug:
                             print ""
                     if self.debug:
-                        print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                        print " Request failed, {0} tries left...".format(self.OtherErrorRetries - OtherError)
                         print sys.exc_info()[0]
                     time.sleep(1)
                     passed = False
@@ -133,7 +133,7 @@ class ftp_connection:
                     if self.debug:
                         print ""
                 if self.debug:
-                    print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                    print " Request failed, {0} tries left...".format(self.OtherErrorRetries - OtherError)
                     print sys.exc_info()[0]
                 time.sleep(1)
                 passed = False
@@ -176,7 +176,7 @@ class ftp_connection:
                         if self.debug:
                             print ""
                     if self.debug:
-                        print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                        print " Request failed, {0} tries left...".format(self.OtherErrorRetries - OtherError)
                         print sys.exc_info()[0]
                     time.sleep(1)
                     passed = False
@@ -189,7 +189,7 @@ class ftp_connection:
                     if self.debug:
                         print ""
                 if self.debug:
-                    print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                    print " Request failed, {0} tries left...".format(self.OtherErrorRetries - OtherError)
                     print sys.exc_info()[0]
                 time.sleep(1)
                 passed = False
@@ -232,7 +232,7 @@ def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS
             ConnectError += 1
             if debug:
                 if ConnectError == 1:
-                    print " Connection failed, will retry until connected... ",
+                    print " Connection failed, will retry until connected...",
                     sys.stdout.softspace=0
                 else:
                     print ".",
@@ -248,7 +248,7 @@ def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS
                 if debug:
                     print ""
             if debug:
-                print " Request failed, {0} tries left... ".format(OtherErrorRetries - OtherError)
+                print " Request failed, {0} tries left...".format(OtherErrorRetries - OtherError)
                 print sys.exc_info()[0]
             time.sleep(1)
             passed = False
