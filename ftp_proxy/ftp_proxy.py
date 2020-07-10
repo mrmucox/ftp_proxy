@@ -1,5 +1,5 @@
 import socket
-from ftplib import FTP
+from ftplib import FTP, error_perm
 import io
 import StringIO
 import gzip
@@ -108,6 +108,22 @@ class ftp_connection:
                         sys.stdout.softspace=0
                 time.sleep(1)
                 passed = False
+            except error_perm as e:
+                err_code = str(e).split(None, 1)[0]
+                if(err_code == '550'):
+                    raise
+                else:
+                    lastException = str(e)[0:4000]
+                    OtherError += 1
+                    if(ProxyExceptions > 0):
+                        ProxyExceptions = 0
+                        if self.debug:
+                            print ""
+                    if self.debug:
+                        print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                        print sys.exc_info()[0]
+                    time.sleep(1)
+                    passed = False
             except Exception as e:
                 passed = False
                 lastException = str(e)[0:4000]
@@ -148,6 +164,22 @@ class ftp_connection:
                         sys.stdout.softspace=0
                 time.sleep(1)
                 passed = False
+            except error_perm as e:
+                err_code = str(e).split(None, 1)[0]
+                if(err_code == '550'):
+                    raise
+                else:
+                    lastException = str(e)[0:4000]
+                    OtherError += 1
+                    if(ProxyExceptions > 0):
+                        ProxyExceptions = 0
+                        if self.debug:
+                            print ""
+                    if self.debug:
+                        print " Request failed, {0} tries left... ".format(self.OtherErrorRetries - OtherError)
+                        print sys.exc_info()[0]
+                    time.sleep(1)
+                    passed = False
             except Exception as e:
                 passed = False
                 lastException = str(e)[0:4000]
@@ -220,4 +252,4 @@ def ftp_proxy(proxy_host, proxy_port, FTP_HOST, FTP_USER = "anonymous", FTP_PASS
                 print sys.exc_info()[0]
             time.sleep(1)
             passed = False
-        raise
+    raise
